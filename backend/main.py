@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
 import os
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import engine, Base
@@ -45,11 +47,21 @@ app.add_middleware(
 # Register routes
 app.include_router(auth_router)
 
+frontend_directory = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
 
 @app.get("/", tags=["Health"])
 def health_check():
     """Health check endpoint."""
     return {"status": "ok", "message": "Sample Project API is running"}
+
+
+@app.get("/{frontend_path:path}", include_in_schema=False)
+def serve_frontend(frontend_path: str):
+    requested_file = (frontend_directory / frontend_path).resolve()
+    if frontend_directory.resolve() in requested_file.parents and requested_file.is_file():
+        return FileResponse(requested_file)
+    return FileResponse(frontend_directory / "index.html")
 
 
 if __name__ == "__main__":
