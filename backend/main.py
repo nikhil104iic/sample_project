@@ -50,7 +50,7 @@ app.include_router(auth_router)
 frontend_directory = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
 
-@app.get("/", tags=["Health"])
+@app.get("/api/health", tags=["Health"])
 def health_check():
     """Health check endpoint."""
     return {"status": "ok", "message": "Sample Project API is running"}
