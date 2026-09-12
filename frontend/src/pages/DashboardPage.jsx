@@ -16,26 +16,31 @@ function DashboardPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
+    let isActive = true;
     if (!user) {
-      fetchUser();
+      api.get('/api/auth/profile')
+        .then((response) => {
+          if (isActive) {
+            setUser(response.data);
+            localStorage.setItem('user_profile', JSON.stringify(response.data));
+            setLoading(false);
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('user_profile');
+          navigate('/login', { replace: true });
+        })
+        .finally(() => {
+          if (isActive) setLoading(false);
+        });
     }
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, [user]);
-
-  const fetchUser = async () => {
-    try {
-      const response = await api.get('/api/auth/profile');
-      setUser(response.data);
-      localStorage.setItem('user_profile', JSON.stringify(response.data));
-    } catch (err) {
-      // Token invalid — redirect to login
-      localStorage.removeItem('access_token');
-      navigate('/login', { replace: true });
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => {
+      isActive = false;
+      clearInterval(timer);
+    };
+  }, [navigate, user]);
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
