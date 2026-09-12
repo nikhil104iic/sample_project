@@ -27,10 +27,12 @@ async def lifespan(app: FastAPI):
         admin_email = os.getenv("ADMIN_EMAIL")
         admin_password = os.getenv("ADMIN_PASSWORD")
         if admin_email:
+            if not admin_password:
+                raise RuntimeError("ADMIN_PASSWORD must be set when ADMIN_EMAIL is configured")
             session = SessionLocal()
             try:
                 admin_user = session.query(User).filter(User.email == admin_email).first()
-                if admin_user is None and admin_password:
+                if admin_user is None:
                     admin_user = User(
                         email=admin_email,
                         full_name=os.getenv("ADMIN_FULL_NAME", "Administrator"),
@@ -39,8 +41,7 @@ async def lifespan(app: FastAPI):
                     session.add(admin_user)
                 if admin_user is not None:
                     admin_user.role = UserRole.ADMIN.value
-                    if admin_password:
-                        admin_user.hashed_password = hash_password(admin_password)
+                    admin_user.hashed_password = hash_password(admin_password)
                     session.commit()
             finally:
                 session.close()
