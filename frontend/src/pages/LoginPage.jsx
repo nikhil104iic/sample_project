@@ -32,6 +32,8 @@ function LoginPage() {
 
       const response = await api.post(endpoint, payload);
       localStorage.setItem('access_token', response.data.access_token);
+      const profileResponse = await api.get('/api/auth/profile');
+      localStorage.setItem('user_profile', JSON.stringify(profileResponse.data));
       navigate('/dashboard', { replace: true });
     } catch (err) {
       const message =

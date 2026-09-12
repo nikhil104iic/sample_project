@@ -2,6 +2,8 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
 
+from models import UserRole
+
 
 # --- Request Schemas ---
 
@@ -18,6 +20,10 @@ class UserLogin(BaseModel):
     password: str
 
 
+class RoleUpdate(BaseModel):
+    role: UserRole
+
+
 # --- Response Schemas ---
 
 class Token(BaseModel):
@@ -31,7 +37,15 @@ class UserResponse(BaseModel):
     id: int
     email: str
     full_name: str
+    role: UserRole
     created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+
+class ProfileResponse(BaseModel):
+    """Minimal profile returned after authentication."""
+    full_name: str
+    email: str
+    role: UserRole

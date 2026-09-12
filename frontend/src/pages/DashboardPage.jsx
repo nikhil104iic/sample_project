@@ -5,20 +5,29 @@ import './DashboardPage.css';
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user_profile'));
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(() => !localStorage.getItem('user_profile'));
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    fetchUser();
+    if (!user) {
+      fetchUser();
+    }
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [user]);
 
   const fetchUser = async () => {
     try {
-      const response = await api.get('/api/auth/me');
+      const response = await api.get('/api/auth/profile');
       setUser(response.data);
+      localStorage.setItem('user_profile', JSON.stringify(response.data));
     } catch (err) {
       // Token invalid — redirect to login
       localStorage.removeItem('access_token');
@@ -30,6 +39,7 @@ function DashboardPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('user_profile');
     navigate('/login', { replace: true });
   };
 
@@ -192,6 +202,10 @@ function DashboardPage() {
             <div className="profile-item">
               <span className="profile-label">Full Name</span>
               <span className="profile-value">{user?.full_name}</span>
+            </div>
+            <div className="profile-item">
+              <span className="profile-label">Role</span>
+              <span className="profile-value">{user?.role}</span>
             </div>
             <div className="profile-item">
               <span className="profile-label">Email</span>

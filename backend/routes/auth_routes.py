@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import User
-from schemas import UserCreate, UserLogin, Token, UserResponse
-from auth import hash_password, verify_password, create_access_token, get_current_user
+from models import User, UserRole
+from schemas import UserCreate, UserLogin, Token, UserResponse, ProfileResponse, RoleUpdate
+from auth import hash_password, verify_password, create_access_token, get_current_user, require_admin
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -25,13 +25,16 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         email=user_data.email,
         full_name=user_data.full_name,
         hashed_password=hash_password(user_data.password),
+        role=UserRole.VIEWER.value,
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
     # Generate token
-    access_token = create_access_token(data={"sub": str(new_user.id)})
+    access_token = create_access_token(
+        data={"sub": str(new_user.id), "role": new_user.role}
+    )
     return Token(access_token=access_token)
 
 
@@ -46,7 +49,9 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token = create_access_token(data={"sub": str(user.id)})
+    access_token = create_access_token(
+        data={"sub": str(user.id), "role": user.role}
+    )
     return Token(access_token=access_token)
 
 
@@ -54,3 +59,27 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
 def get_me(current_user: User = Depends(get_current_user)):
     """Return the currently authenticated user's profile."""
     return current_user
+
+
+@router.get("/profile", response_model=ProfileResponse)
+def get_profile(current_user: User = Depends(get_current_user)):
+    """Return the authenticated user's name and role."""
+    return current_user
+
+
+@router.patch("/users/{user_id}/role", response_model=UserResponse)
+def update_user_role(
+    user_id: int,
+    role_update: RoleUpdate,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    """Update a user's role. This endpoint is restricted to admins."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    user.role = role_update.role.value
+    db.commit()
+    db.refresh(user)
+    return user

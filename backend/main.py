@@ -4,9 +4,11 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
+from sqlalchemy import inspect, text
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import engine, Base
+from models import UserRole
 from routes.auth_routes import router as auth_router
 
 
@@ -14,6 +16,18 @@ from routes.auth_routes import router as auth_router
 async def lifespan(app: FastAPI):
     """Create database tables on startup."""
     Base.metadata.create_all(bind=engine)
+    with engine.begin() as connection:
+        columns = {column["name"] for column in inspect(connection).get_columns("users")}
+        if "role" not in columns:
+            connection.execute(
+                text("ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'viewer'")
+            )
+        admin_email = os.getenv("ADMIN_EMAIL")
+        if admin_email:
+            connection.execute(
+                text("UPDATE users SET role = :role WHERE email = :email"),
+                {"role": UserRole.ADMIN.value, "email": admin_email},
+            )
     print("Database tables created successfully")
     yield
 
