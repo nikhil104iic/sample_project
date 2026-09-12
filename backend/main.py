@@ -7,8 +7,9 @@ from fastapi.responses import FileResponse
 from sqlalchemy import inspect, text
 from fastapi.middleware.cors import CORSMiddleware
 
-from database import engine, Base
-from models import UserRole
+from database import engine, Base, SessionLocal
+from models import User, UserRole
+from auth import hash_password
 from routes.files_routes import router as files_router
 from routes.auth_routes import router as auth_router
 
@@ -24,11 +25,23 @@ async def lifespan(app: FastAPI):
                 text("ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'viewer'")
             )
         admin_email = os.getenv("ADMIN_EMAIL")
+        admin_password = os.getenv("ADMIN_PASSWORD")
         if admin_email:
-            connection.execute(
-                text("UPDATE users SET role = :role WHERE email = :email"),
-                {"role": UserRole.ADMIN.value, "email": admin_email},
-            )
+            session = SessionLocal()
+            try:
+                admin_user = session.query(User).filter(User.email == admin_email).first()
+                if admin_user is None and admin_password:
+                    admin_user = User(
+                        email=admin_email,
+                        full_name=os.getenv("ADMIN_FULL_NAME", "Administrator"),
+                        hashed_password=hash_password(admin_password),
+                    )
+                    session.add(admin_user)
+                if admin_user is not None:
+                    admin_user.role = UserRole.ADMIN.value
+                    session.commit()
+            finally:
+                session.close()
     print("Database tables created successfully")
     yield
 
