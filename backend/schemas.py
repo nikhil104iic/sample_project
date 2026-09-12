@@ -49,3 +49,15 @@ class ProfileResponse(BaseModel):
     full_name: str
     email: str
     role: UserRole
+
+
+class DocumentResponse(BaseModel):
+    """Metadata returned for an uploaded PDF."""
+    id: int
+    original_name: str
+    file_size: int
+    uploaded_by: int
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

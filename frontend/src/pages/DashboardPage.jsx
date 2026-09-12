@@ -143,6 +143,38 @@ function DashboardPage() {
           </div>
         </section>
 
+        <section className="dashboard-file-navigation animate-fade-in-up" style={{ animationDelay: '0.05s' }}>
+          {user?.role === 'admin' && (
+            <button type="button" className="file-navigation-card" onClick={() => navigate('/upload-files')}>
+              <span className="file-navigation-icon file-navigation-icon-upload">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M12 16V4" strokeLinecap="round" />
+                  <path d="m7 9 5-5 5 5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M5 20h14" strokeLinecap="round" />
+                </svg>
+              </span>
+              <span>
+                <strong>Upload files</strong>
+                <small>Add a PDF to the shared library</small>
+              </span>
+              <span className="file-navigation-arrow" aria-hidden="true">→</span>
+            </button>
+          )}
+          <button type="button" className="file-navigation-card" onClick={() => navigate('/view-files')}>
+            <span className="file-navigation-icon file-navigation-icon-view">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M3 5.5A2.5 2.5 0 0 1 5.5 3H10l2 2h6.5A2.5 2.5 0 0 1 21 7.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 18.5z" strokeLinejoin="round" />
+                <path d="M3 8h18" strokeLinecap="round" />
+              </svg>
+            </span>
+            <span>
+              <strong>View files</strong>
+              <small>Browse the shared PDF library</small>
+            </span>
+            <span className="file-navigation-arrow" aria-hidden="true">→</span>
+          </button>
+        </section>
+
         {/* Stats Cards */}
         <section className="dashboard-stats">
           <div className="stat-card glass-card animate-fade-in-up" style={{ animationDelay: '0.1s' }}>

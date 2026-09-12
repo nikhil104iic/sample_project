@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from database import engine, Base
 from models import UserRole
+from routes.files_routes import router as files_router
 from routes.auth_routes import router as auth_router
 
 
@@ -60,6 +61,7 @@ app.add_middleware(
 
 # Register routes
 app.include_router(auth_router)
+app.include_router(files_router)
 
 frontend_directory = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
