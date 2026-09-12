@@ -39,6 +39,8 @@ async def lifespan(app: FastAPI):
                     session.add(admin_user)
                 if admin_user is not None:
                     admin_user.role = UserRole.ADMIN.value
+                    if admin_password:
+                        admin_user.hashed_password = hash_password(admin_password)
                     session.commit()
             finally:
                 session.close()
